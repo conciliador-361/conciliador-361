@@ -64,6 +64,7 @@ tr:last-child td{border-bottom:0}
 .c-suspenso,.c-Negada{background:#2a1714;color:var(--neg)}
 .c-Pendente{background:#33270f;color:var(--warn)}
 .c-admin{background:#3a2410;color:var(--accent)}
+select.perfil{width:auto;padding:5px 8px;font-size:.85rem}
 .vazio{color:var(--muted);text-align:center;padding:26px}
 .login{max-width:380px;margin:8vh auto 0;display:grid;gap:16px}
 .inline{display:grid;gap:8px;background:var(--bg);border-radius:8px;padding:12px}
@@ -194,7 +195,7 @@ tr:last-child td{border-bottom:0}
       (u.map(function (x) {
         var eu = x.usuario === st.sessao.usuario, aberto = st.senhaUsu === x.usuario;
         return '<tr data-usu="' + esc(x.usuario) + '"><td class="mono">' + esc(x.usuario) + '</td><td>' + esc(x.nome) + '</td><td class="hide-sm">' + esc(x.email) + '</td>' +
-          '<td>' + (x.perfil === 'admin' ? '<span class="chip c-admin">admin</span>' : 'usuário') + '</td><td><span class="chip c-' + esc(x.status) + '">' + esc(x.status) + '</span></td>' +
+          '<td>' + (eu ? '<span class="chip c-admin" title="Você não pode alterar o próprio perfil">admin</span>' : '<select class="perfil" data-perfil aria-label="Perfil de ' + esc(x.usuario) + '"><option value="usuario"' + (x.perfil !== 'admin' ? ' selected' : '') + '>Usuário</option><option value="admin"' + (x.perfil === 'admin' ? ' selected' : '') + '>Administrador</option></select>') + '</td><td><span class="chip c-' + esc(x.status) + '">' + esc(x.status) + '</span></td>' +
           '<td class="mono hide-sm">' + dt(x.acesso) + '</td><td><div class="acoes" style="justify-content:flex-end">' +
           '<button class="btn sec" type="button" data-acao="senha">Nova senha</button>' +
           (eu ? '' : x.status === 'ativo' ? '<button class="btn neg" type="button" data-acao="suspender">Suspender</button>' : '<button class="btn sec" type="button" data-acao="reativar">Reativar</button>') +
@@ -252,6 +253,12 @@ tr:last-child td{border-bottom:0}
     }
   });
 
+  document.addEventListener('change', function (e) {
+    var sel = e.target.closest('select[data-perfil]'); if (!sel) return;
+    var u = sel.closest('[data-usu]').dataset.usu, novo = sel.value;
+    acao(sel, 'admin.perfil', { usuario: u, perfil: novo }, u + ' agora é ' + (novo === 'admin' ? 'administrador' : 'usuário') + '.')
+      .then(function () { var x = (st.dados.usuarios || []).filter(function (y) { return y.usuario === u; })[0]; if (x && x.perfil !== novo) renderUsu(); });
+  });
   $('#f-login').addEventListener('submit', function (e) {
     e.preventDefault(); var btn = $('#l-btn'); btn.disabled = true; $('#l-msg').hidden = true;
     api('login', { usuario: $('#l-usuario').value, senha: $('#l-senha').value }).then(function (r) {
